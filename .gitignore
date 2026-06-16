@@ -1,0 +1,11 @@
+.env
+.streamlit/
+db/
+__pycache__/
+venv/
+
+git add .gitignore
+git add app.py
+git add requirements.txt
+git add runtime.txt
+# (Adicione outros arquivos de código aqui se necessário)
