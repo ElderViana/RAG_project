@@ -7,6 +7,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# No seu app.py (Streamlit)
+@st.cache_resource # Isso mantém o banco na memória RAM enquanto a app estiver rodando
+def get_db():
+    # Carrega seus PDFs e cria o banco em tempo de execução
+    # Não use persist_directory, ou use um diretório que o Streamlit permita (como /tmp)
+    db = Chroma.from_documents(
+        chunks, 
+        embeddings
+    )
+    return db
+
 
 st.set_page_config(page_title="Meu Assistente RAG", page_icon="🤖", layout="centered")
 st.title("🤖 Pergunte ao nosso assistente")
