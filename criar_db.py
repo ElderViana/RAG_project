@@ -1,49 +1,65 @@
 import os
+import shutil
 import warnings
-from dotenv import load_dotenv
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_pinecone import PineconeVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
+from dotenv import load_dotenv
 
-warnings.filterwarnings("ignore", category=DeprecationWarning)
 load_dotenv()
 
 PASTA_BASE = "base"
+CAMINHO_DB = "db"  
 
 def criar_db():
-    print("🚀 Iniciando processamento...")
+
     documentos = carregar_documentos()
-    if not documentos:
-        print("⚠️ Nenhum documento encontrado.")
-        return
-        
+   
     chunks = dividir_chunks(documentos)
+
     vetorizar_chunks(chunks)
-    print("✅ Dados enviados para o Pinecone com sucesso!")
     
 def carregar_documentos():
     carregador = PyPDFDirectoryLoader(PASTA_BASE, glob="**/*.pdf")
-    return carregador.load()
+    documentos = carregador.load()
+    return documentos
 
 def dividir_chunks(documentos):
-    separador = RecursiveCharacterTextSplitter(
-        chunk_size=2000, 
-        chunk_overlap=500
+    separador_documentos = RecursiveCharacterTextSplitter(
+        chunk_size=2000,     
+        chunk_overlap=500,    
+        length_function=len,
+        add_start_index=True,
+        is_separator_regex=False,
     )
-    return separador.split_documents(documentos)
+    chunks = separador_documentos.split_documents(documentos)
+    return chunks
 
 def vetorizar_chunks(chunks):
+
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    # O PineconeVectorStore.from_documents já cria ou adiciona ao índice existente
-    PineconeVectorStore.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        index_name="seu-indice-no-pinecone"
+    if os.path.exists(CAMINHO_DB):
+        shutil.rmtree(CAMINHO_DB)
+
+   
+
+
+    # Em vez de persist_directory, você aponta para o índice criado no site do Pinecone
+    vectorstore = PineconeVectorStore(
+    index_name="seu-indice-no-pinecone",
+    embedding=embeddings
     )
+
+    # Para salvar os documentos:
+    vectorstore.add_documents(chunks)
+
 
 if __name__ == "__main__":
     criar_db()
