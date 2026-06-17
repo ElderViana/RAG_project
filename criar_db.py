@@ -6,7 +6,7 @@ warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 from langchain_community.document_loaders import PyPDFDirectoryLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma  # CORRIGIDO: Importação moderna idêntica ao main.py
+from langchain_pinecone import PineconeVectorStore
 from langchain_huggingface import HuggingFaceEmbeddings
 from dotenv import load_dotenv
 
@@ -49,11 +49,16 @@ def vetorizar_chunks(chunks):
         shutil.rmtree(CAMINHO_DB)
 
    
-    db = Chroma.from_documents(
-        chunks,
-        embeddings,
-        persist_directory=CAMINHO_DB
+
+
+    # Em vez de persist_directory, você aponta para o índice criado no site do Pinecone
+    vectorstore = PineconeVectorStore(
+    index_name="seu-indice-no-pinecone",
+    embedding=embeddings
     )
+
+    # Para salvar os documentos:
+    vectorstore.add_documents(chunks)
 
 
 if __name__ == "__main__":
